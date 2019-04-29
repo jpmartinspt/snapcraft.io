@@ -2,6 +2,7 @@ import flask
 
 import bleach
 import humanize
+import random
 from ruamel.yaml import YAML
 from pybadges import badge
 import webapp.helpers as helpers
@@ -32,6 +33,14 @@ def _get_file(file):
         data = None
 
     return data
+
+
+def get_n_random_snaps(snaps, choice_number):
+
+    if len(snaps) > choice_number:
+        return random.choices(snaps, k=choice_number)
+
+    return snaps
 
 
 def snap_details_views(store, api, handle_errors):
@@ -102,7 +111,17 @@ def snap_details_views(store, api, handle_errors):
             )
         )
 
-        print(publisher_info_and_snaps)
+        publisher_featured_snaps = None
+        publisher_snaps = None
+
+        if publisher_info_and_snaps:
+            publisher_featured_snaps = publisher_info_and_snaps.get(
+                "featured_snaps"
+            )
+            publisher_snaps = get_n_random_snaps(
+                publisher_info_and_snaps["snaps"], 4
+            )
+
         videos = logic.get_videos(details["snap"]["media"])
 
         # until default tracks are supported by the API we special case node
@@ -145,7 +164,9 @@ def snap_details_views(store, api, handle_errors):
             "username": details["snap"]["publisher"]["username"],
             "screenshots": screenshots,
             "videos": videos,
-            "publisher_info_and_snaps": publisher_info_and_snaps,
+            "publisher_snaps": publisher_snaps,
+            "publisher_featured_snaps": publisher_featured_snaps,
+            "has_publisher_page": publisher_info_and_snaps is not None,
             "prices": details["snap"]["prices"],
             "contact": details["snap"].get("contact"),
             "website": details["snap"].get("website"),
