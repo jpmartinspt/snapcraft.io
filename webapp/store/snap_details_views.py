@@ -2,6 +2,7 @@ import flask
 
 import bleach
 import humanize
+from ruamel.yaml import YAML
 from pybadges import badge
 import webapp.helpers as helpers
 import webapp.metrics.helper as metrics_helper
@@ -16,6 +17,21 @@ from webapp.api.exceptions import (
     ApiTimeoutError,
 )
 from webapp.markdown import parse_markdown_description
+
+yaml = YAML(typ="safe")
+
+
+def _get_file(file):
+
+    file = flask.current_app.root_path + file
+    try:
+        with open(file, "r") as stream:
+            data = yaml.load(stream)
+    except Exception as e:
+        print(e)
+        data = None
+
+    return data
 
 
 def snap_details_views(store, api, handle_errors):
@@ -48,7 +64,7 @@ def snap_details_views(store, api, handle_errors):
         except ApiError as api_error:
             flask.abort(502, str(api_error))
 
-        # When removing all the channel maps of an exsting snap the API,
+        # When removing all the channel maps of an existing snap the API,
         # responds that the snaps still exists with data.
         # Return a 404 if not channel maps, to avoid having a error.
         # For example: mir-kiosk-browser
@@ -77,6 +93,16 @@ def snap_details_views(store, api, handle_errors):
 
         icons = logic.get_icon(details["snap"]["media"])
 
+        publisher_info_and_snaps = _get_file(
+            "/{}{}.yaml".format(
+                flask.current_app.config["CONTENT_DIRECTORY"][
+                    "PUBLISHER_PAGES"
+                ],
+                details["snap"]["publisher"]["username"],
+            )
+        )
+
+        print(publisher_info_and_snaps)
         videos = logic.get_videos(details["snap"]["media"])
 
         # until default tracks are supported by the API we special case node
@@ -119,6 +145,7 @@ def snap_details_views(store, api, handle_errors):
             "username": details["snap"]["publisher"]["username"],
             "screenshots": screenshots,
             "videos": videos,
+            "publisher_info_and_snaps": publisher_info_and_snaps,
             "prices": details["snap"]["prices"],
             "contact": details["snap"].get("contact"),
             "website": details["snap"].get("website"),
