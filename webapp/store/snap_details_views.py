@@ -38,7 +38,7 @@ def _get_file(file):
 def get_n_random_snaps(snaps, choice_number):
 
     if len(snaps) > choice_number:
-        return random.choices(snaps, k=choice_number)
+        return random.sample(snaps, choice_number)
 
     return snaps
 
