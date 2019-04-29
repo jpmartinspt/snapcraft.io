@@ -1,4 +1,4 @@
-{% if publisher_info_and_snaps %}
+{% if has_publisher_page %}
 <a href="/publisher/{{ username }}" title="More about {{ display_name(publisher, username) }}">{{ display_name(publisher, username) }}</a>
 {% else %}
 {{ display_name(publisher, username) }}
