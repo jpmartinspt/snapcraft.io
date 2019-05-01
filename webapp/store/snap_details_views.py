@@ -2,7 +2,6 @@ import flask
 
 import humanize
 import bleach
-from ruamel.yaml import YAML
 from pybadges import badge
 import webapp.helpers as helpers
 import webapp.metrics.helper as metrics_helper
@@ -17,8 +16,6 @@ from webapp.api.exceptions import (
     ApiTimeoutError,
 )
 from webapp.markdown import parse_markdown_description
-
-yaml = YAML(typ="safe")
 
 
 def snap_details_views(store, api, handle_errors):
@@ -86,7 +83,6 @@ def snap_details_views(store, api, handle_errors):
                     "PUBLISHER_PAGES"
                 ],
                 details["snap"]["publisher"]["username"],
-                ".yaml",
             )
         )
 
