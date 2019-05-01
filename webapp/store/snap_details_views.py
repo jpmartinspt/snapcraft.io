@@ -1,8 +1,7 @@
 import flask
 
-import bleach
 import humanize
-import random
+import bleach
 from ruamel.yaml import YAML
 from pybadges import badge
 import webapp.helpers as helpers
@@ -20,27 +19,6 @@ from webapp.api.exceptions import (
 from webapp.markdown import parse_markdown_description
 
 yaml = YAML(typ="safe")
-
-
-def _get_file(file):
-
-    file = flask.current_app.root_path + file
-    try:
-        with open(file, "r") as stream:
-            data = yaml.load(stream)
-    except Exception as e:
-        print(e)
-        data = None
-
-    return data
-
-
-def get_n_random_snaps(snaps, choice_number):
-
-    if len(snaps) > choice_number:
-        return random.sample(snaps, choice_number)
-
-    return snaps
 
 
 def snap_details_views(store, api, handle_errors):
@@ -102,12 +80,13 @@ def snap_details_views(store, api, handle_errors):
 
         icons = logic.get_icon(details["snap"]["media"])
 
-        publisher_info_and_snaps = _get_file(
+        publisher_info_and_snaps = helpers._get_file(
             "/{}{}.yaml".format(
                 flask.current_app.config["CONTENT_DIRECTORY"][
                     "PUBLISHER_PAGES"
                 ],
                 details["snap"]["publisher"]["username"],
+                ".yaml",
             )
         )
 
@@ -118,7 +97,7 @@ def snap_details_views(store, api, handle_errors):
             publisher_featured_snaps = publisher_info_and_snaps.get(
                 "featured_snaps"
             )
-            publisher_snaps = get_n_random_snaps(
+            publisher_snaps = logic.get_n_random_snaps(
                 publisher_info_and_snaps["snaps"], 4
             )
 
