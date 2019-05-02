@@ -252,12 +252,6 @@ def store_blueprint(store_query=None, testing=False):
             publisher_content_path + publisher + ".yaml"
         )
 
-        "/{}{}.yaml".format(
-            flask.current_app.config["CONTENT_DIRECTORY"]["PUBLISHER_PAGES"],
-            publisher,
-            ".yaml",
-        )
-
         if not context:
             flask.abort(404)
 
