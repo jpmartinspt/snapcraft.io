@@ -72,11 +72,7 @@ class StoreApi:
             self.headers.update({"X-Ubuntu-Store": store})
             self.headers_v2.update({"Snap-Device-Store": store})
 
-        if testing or not cache:
-            self.session = api.requests.Session()
-        else:
-            self.session = api.requests.CachedSession(timeout=(1, 6))
-
+        self.session = api.requests.Session()
         self.session.headers.update(self.headers)
         self.session.headers.update(self.headers_v2)
 

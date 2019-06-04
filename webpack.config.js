@@ -17,6 +17,7 @@ module.exports = {
   entry: {
     "global-nav": "./static/js/base/global-nav.js",
     base: "./static/js/base/base.js",
+    build: "./static/js/publisher/build.js",
     release: "./static/js/publisher/release.js",
     public: "./static/js/public/public.js",
     // TODO:
@@ -52,6 +53,10 @@ module.exports = {
       {
         test: require.resolve(__dirname + "/static/js/base/base.js"),
         use: ["expose-loader?snapcraft.base", "babel-loader"]
+      },
+      {
+        test: require.resolve(__dirname + "/static/js/publisher/build.js"),
+        use: ["expose-loader?snapcraft.build", "babel-loader"]
       },
       {
         test: require.resolve(__dirname + "/static/js/publisher/release.js"),

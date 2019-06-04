@@ -10,6 +10,7 @@ import webapp.api.dashboard as api
 import webapp.metrics.helper as metrics_helper
 import webapp.metrics.metrics as metrics
 from webapp import authentication
+from webapp.api import github
 from webapp.api.exceptions import (
     AgreementNotSigned,
     ApiError,
@@ -20,6 +21,7 @@ from webapp.api.exceptions import (
     MacaroonRefreshRequired,
     MissingUsername,
 )
+from webapp.api.launchpad import launchpad
 from webapp.api.store import StoreApi
 from webapp.store.logic import (
     get_categories,
@@ -1302,3 +1304,87 @@ def post_preview(snap_name):
     context["normalized_os"] = preview_data.get_normalised_oses()
 
     return flask.render_template("store/snap-details.html", **context)
+
+
+@publisher_snaps.route("/<snap_name>/builds", methods=["GET"])
+@login_required
+def snap_builds(snap_name):
+    try:
+        details = api.get_snap_info(snap_name, flask.session)
+    except ApiResponseErrorList as api_response_error_list:
+        if api_response_error_list.status_code == 404:
+            return flask.abort(404, "No snap named {}".format(snap_name))
+        else:
+            return _handle_error_list(api_response_error_list.errors)
+    except ApiError as api_error:
+        return _handle_errors(api_error)
+
+    github_session = flask.session.get("github")
+    context = {
+        "snap_id": details["snap_id"],
+        "snap_name": details["snap_name"],
+        "snap_title": details["title"],
+        "snap": {"name": details.get("snap_name", "")},
+        "user": {"github": "true" if github_session else "false"},
+    }
+
+    return flask.render_template("publisher/builds.html", **context)
+
+
+@publisher_snaps.route("/<snap_name>/builds/list", methods=["GET"])
+@login_required
+def get_snap_builds(snap_name):
+    snap = launchpad.snaps.findByStoreName(
+        store_name=snap_name,
+        owner="https://api.launchpad.net/devel/~build.snapcraft.io",
+    )
+
+    if not snap:
+        return flask.jsonify({"error": "Snap not found"}), 404
+
+    # In case we get more than a snap from LP, error.
+    if len(snap) > 1:
+        return (
+            flask.jsonify(
+                {
+                    "error": (
+                        f"Launchpad findByStoreName returned "
+                        f"multiple entries for `{snap_name}`"
+                    )
+                }
+            ),
+            500,
+        )
+
+    return flask.jsonify(snap[0].builds.entries)
+
+
+@publisher_snaps.route("/<snap_name>/builds/enable", methods=["GET", "POST"])
+@login_required
+def enable_snap_builds(snap_name):
+    build_repo = flask.request.args.get("build_repo")
+    if not build_repo:
+        return flask.jsonify({}), 400
+
+    return flask.jsonify({}), 200
+
+
+@publisher_snaps.route("/<snap_name>/builds/repositories")
+@login_required
+def get_build_repos(snap_name):
+    search = flask.request.args.get("search", "")
+
+    github_session = flask.session.get("github")
+    if not github_session:
+        return flask.jsonify({"error": "No GitHub token in session"}), 400
+
+    orgs = github.get_user_orgs(
+        github_session.github_token, github_session.github_username
+    ).json()
+
+    org_names = [org["organization"]["login"] for org in orgs]
+    repos = github.search_repositories(
+        search, github_session.github_username, org_names
+    ).json()
+
+    return flask.jsonify(repos), 200

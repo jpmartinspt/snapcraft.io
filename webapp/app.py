@@ -18,8 +18,8 @@ from canonicalwebteam.yaml_responses.flask_helpers import (
     prepare_redirects,
 )
 
-# from webapp.blog.views import blog
 from webapp.blog.views import init_blog
+from webapp.builder.views import builder
 from webapp.docs.views import init_docs
 from webapp.extensions import csrf
 from webapp.first_snap.views import first_snap
@@ -81,6 +81,7 @@ def init_snapcraft(app, testing=False):
     app.register_blueprint(store_blueprint(testing=testing))
     app.register_blueprint(account, url_prefix="/account")
     app.register_blueprint(publisher_snaps)
+    app.register_blueprint(builder, url_prefix="/build")
     init_docs(app, "/docs")
     init_blog(app, "/blog")
 
